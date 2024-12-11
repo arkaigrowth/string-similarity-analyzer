@@ -23,6 +23,8 @@ A Python tool for analyzing and identifying similar product attributes in spread
   - openpyxl
   - thefuzz
   - python-Levenshtein
+  - streamlit
+  - plotly
 
 ## Installation
 
@@ -42,6 +44,23 @@ pip install -r requirements.txt
 ```
 
 ## Usage
+
+### Option 1: Streamlit Web Interface (Recommended)
+
+1. Run the Streamlit app:
+```bash
+streamlit run app.py
+```
+
+2. Open your web browser to the displayed URL (typically http://localhost:8501)
+
+3. Use the web interface to:
+   - Upload your Excel file
+   - Set the similarity threshold
+   - View and download results
+   - Explore data visualizations
+
+### Option 2: Command Line Interface
 
 1. Place your Excel file containing attributes in the project directory
 2. Run the script:
@@ -68,11 +87,24 @@ The generated Excel file contains the following columns:
 
 ```mermaid
 graph TD
-    User[User] --> |Runs| Script[attribute_analyzer.py]
-    Script --> |Prompts| Threshold[Enter Similarity Threshold]
+    User[User] --> |Accesses| WebUI[Streamlit Web Interface]
+    User --> |Or Runs| CLI[Command Line Interface]
     
-    subgraph Main Program
-        Script --> |Calls| FindSimilar[find_similar_attributes]
+    WebUI --> |Runs| App[app.py]
+    CLI --> |Runs| Script[attribute_analyzer.py]
+    
+    subgraph Frontend
+        WebUI --> |Provides| Upload[File Upload]
+        WebUI --> |Sets| WebThreshold[Similarity Threshold]
+        WebUI --> |Shows| Viz[Data Visualizations]
+        WebUI --> |Downloads| Results[Results]
+    end
+    
+    subgraph Backend
+        App --> |Imports| Analyzer[attribute_analyzer.py]
+        Script --> |Prompts| Threshold[Enter Similarity Threshold]
+        
+        Analyzer --> |Contains| FindSimilar[find_similar_attributes]
         FindSimilar --> |Uses| Normalize[normalize_text]
         FindSimilar --> |Uses| CaseCheck[are_case_variants]
         
