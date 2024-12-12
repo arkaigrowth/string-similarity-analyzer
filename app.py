@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 from attribute_analyzer import (
     find_similar_attributes,
     find_differences,
@@ -135,7 +136,8 @@ if uploaded_file is not None:
                 with col1:
                     st.metric("Total Similar Pairs", len(results_df))
                 with col2:
-                    st.metric("Average Similarity", f"{sum(similarities)/len(similarities):.1f}%")
+                    avg_similarity = np.mean(similarities) if similarities else 0
+                    st.metric("Average Similarity", f"{avg_similarity:.1f}%")
                 with col3:
                     st.metric("100% Matches", len([s for s in similarities if s == 100]))
             else:

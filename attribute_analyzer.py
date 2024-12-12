@@ -4,9 +4,12 @@ from thefuzz import fuzz
 import re
 from collections import defaultdict
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import PatternFill, Font, Alignment
+from openpyxl.comments import Comment
 import os
 import difflib
+from typing import Dict, List, Tuple
 
 def normalize_text(text):
     """Enhanced text normalization"""
@@ -30,7 +33,18 @@ def are_case_variants(attr1, attr2):
     clean2 = re.sub(r'[^\w\s]', '', attr2).lower()
     return clean1 == clean2 and attr1 != attr2
 
-def find_similar_attributes(file_path, similarity_threshold=80):
+def find_similar_attributes(file_path: str, similarity_threshold: float = 80) -> Dict[str, List[Tuple[str, float]]]:
+    """
+    Find similar attributes in an Excel file using fuzzy string matching.
+    
+    Args:
+        file_path (str): Path to the Excel file containing attributes
+        similarity_threshold (float): Minimum similarity threshold (0-100)
+        
+    Returns:
+        Dict[str, List[Tuple[str, float]]]: Dictionary mapping base attributes to lists of 
+            tuples containing (similar_attribute, similarity_score)
+    """
     # Read the Excel file
     df = pd.read_excel(file_path)
     
@@ -140,17 +154,25 @@ def get_unique_filename(file_path):
         counter += 1
 
 def export_to_excel(similar_groups, min_threshold, input_file_path):
+    """
+    Export similar attributes to an Excel file with formatting.
+    
+    Args:
+        similar_groups (dict): Dictionary of similar attribute groups
+        min_threshold (float): Minimum similarity threshold used
+        input_file_path (str): Path to the input file
+        
+    Returns:
+        str: Path to the generated Excel file
+    """
     # Create output filename
-    dir_path = os.path.dirname(input_file_path)
-    base_name = os.path.basename(input_file_path)
-    output_file = os.path.join(dir_path, f"similarity_{base_name}")
-    
-    # Get unique filename
+    base_name = os.path.splitext(os.path.basename(input_file_path))[0]
+    output_file = f"similarity_{base_name}_{min_threshold}%.xlsx"
     output_file = get_unique_filename(output_file)
-    
+
     # Create workbook and select active sheet
     wb = Workbook()
-    ws = wb.active
+    ws: Worksheet = wb.active  # Type hint for worksheet
     ws.title = f"Similarity {min_threshold}%+"
     
     # Define styles
@@ -177,11 +199,9 @@ def export_to_excel(similar_groups, min_threshold, input_file_path):
             
         # Add notes to specific columns
         if header == "Proposed Catsy Key":
-            from openpyxl.comments import Comment
             comment = Comment("Alex Kamysz: (all lowercase, no spaces, only special characters allowed are underscores _ )", "Attribute Analyzer")
             cell.comment = comment
         elif header == "Pair ID to merge with":
-            from openpyxl.comments import Comment
             comment = Comment("please specify if there are multiple pair IDs to merge", "Attribute Analyzer")
             cell.comment = comment
     
@@ -212,9 +232,7 @@ def export_to_excel(similar_groups, min_threshold, input_file_path):
             cell.font = normal_font
             
             if differences:
-                from openpyxl.comments import Comment
-                diff_parts = [d[0] if row == current_row else d[1] for d in differences]
-                comment = Comment(f"Different parts:\n{', '.join(diff_parts)}", "Attribute Analyzer")
+                comment = Comment(f"Different parts:\n{', '.join([d[0] if row == current_row else d[1] for d in differences])}", "Attribute Analyzer")
                 cell.comment = comment
         
         # First row of pair
@@ -266,21 +284,21 @@ def export_to_excel(similar_groups, min_threshold, input_file_path):
     return output_file
 
 if __name__ == "__main__":
-    file_path = "daemar-full-attribute-list-for-analysis.xlsx"
+    file_path: str = "daemar-full-attribute-list-for-analysis.xlsx"
     
     while True:
         try:
-            threshold = float(input("Enter minimum similarity threshold (0-100): "))
+            threshold: float = float(input("Enter minimum similarity threshold (0-100): "))
             if 0 <= threshold <= 100:
                 break
-            else:
-                print("Please enter a number between 0 and 100")
+            print("Please enter a number between 0 and 100")
         except ValueError:
             print("Please enter a valid number")
     
-    similar_groups = find_similar_attributes(file_path, similarity_threshold=threshold)
+    similar_groups: Dict[str, List[Tuple[str, float]]] = find_similar_attributes(file_path, similarity_threshold=threshold)
     print(f"\nShowing matches with {threshold}% or higher similarity:")
     print_similar_groups(similar_groups, threshold)
     
-    # Export results to Excel
+    # Export to Excel
     output_file = export_to_excel(similar_groups, threshold, file_path)
+    print(f"\nResults exported to: {output_file}")
