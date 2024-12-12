@@ -121,25 +121,29 @@ if uploaded_file is not None:
                 
                 # Add visualizations
                 st.subheader("Similarity Distribution")
-                similarities = results_df["Similarity %"].tolist()
-                fig = px.histogram(
-                    x=similarities,
-                    nbins=20,
-                    labels={'x': 'Similarity %', 'y': 'Count'},
-                    title='Distribution of Similarity Scores'
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                similarities = pd.Series(results_df["Similarity %"])
                 
-                # Summary statistics
-                st.subheader("Summary Statistics")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Total Similar Pairs", len(results_df))
-                with col2:
-                    avg_similarity = np.mean(similarities) if similarities else 0
-                    st.metric("Average Similarity", f"{avg_similarity:.1f}%")
-                with col3:
-                    st.metric("100% Matches", len([s for s in similarities if s == 100]))
+                if not similarities.empty:
+                    fig = px.histogram(
+                        x=similarities,
+                        nbins=20,
+                        labels={'x': 'Similarity %', 'y': 'Count'},
+                        title='Distribution of Similarity Scores'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Summary statistics
+                    st.subheader("Summary Statistics")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Similar Pairs", len(results_df))
+                    with col2:
+                        avg_similarity = similarities.mean()
+                        st.metric("Average Similarity", f"{avg_similarity:.1f}%")
+                    with col3:
+                        st.metric("100% Matches", len(similarities[similarities == 100]))
+                else:
+                    st.info("No similar attributes found with the current threshold.")
             else:
                 st.info("No similar attributes found with the current threshold.")
 

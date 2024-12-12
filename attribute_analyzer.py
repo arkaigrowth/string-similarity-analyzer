@@ -9,7 +9,7 @@ from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.comments import Comment
 import os
 import difflib
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 def normalize_text(text):
     """Enhanced text normalization"""
@@ -171,8 +171,8 @@ def export_to_excel(similar_groups, min_threshold, input_file_path):
     output_file = get_unique_filename(output_file)
 
     # Create workbook and select active sheet
-    wb = Workbook()
-    ws: Worksheet = wb.active  # Type hint for worksheet
+    wb: Workbook = Workbook()
+    ws = cast(Worksheet, wb.active)  # Properly cast the active worksheet
     ws.title = f"Similarity {min_threshold}%+"
     
     # Define styles
