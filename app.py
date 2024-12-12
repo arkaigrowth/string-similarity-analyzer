@@ -92,7 +92,7 @@ if uploaded_file is not None:
                     results_data.append({
                         "Base Attribute": base_attr,
                         "Similar Attribute": match,
-                        "Similarity %": f"{score}%",
+                        "Similarity %": score,
                         "Differences": diff_text
                     })
             
@@ -107,7 +107,10 @@ if uploaded_file is not None:
                     column_config={
                         "Base Attribute": st.column_config.TextColumn("Base Attribute"),
                         "Similar Attribute": st.column_config.TextColumn("Similar Attribute"),
-                        "Similarity %": st.column_config.TextColumn("Similarity %"),
+                        "Similarity %": st.column_config.NumberColumn(
+                            "Similarity %",
+                            format="%.1f%%"
+                        ),
                         "Differences": st.column_config.TextColumn(
                             "Differences",
                             width="large",
@@ -117,7 +120,7 @@ if uploaded_file is not None:
                 
                 # Add visualizations
                 st.subheader("Similarity Distribution")
-                similarities = [float(s.strip('%')) for s in results_df["Similarity %"]]
+                similarities = results_df["Similarity %"].tolist()
                 fig = px.histogram(
                     x=similarities,
                     nbins=20,
